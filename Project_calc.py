@@ -1,21 +1,21 @@
 import tkinter as tk
 from tkinter import StringVar
-
 expression = ""
-new_exp = None
+new_exp = '!'
 lst_val = ['1', '2', '3' ,'4', '5', '6', '7', '8', '9', '0', '.']
 rep = {str(chr(247)):'/', 'mod':'%', 'x':'*', 'ANS':str(new_exp)}
 
 def theExp(num : str, equation, top):
-    global expression   
+    global expression       
     
     for i in range(len(expression)):
-        if num == '(' and expression[i-1] in lst_val:
+                
+        if num == '(' and (expression[i-1] in lst_val or expression[i-1] == 'S'):
             expression += 'x('
             equation.set(expression)
             top.config(text=expression)
             return
-        if num == '(' and expression[i-1] not in lst_val:
+        if num == '(' and (expression[i-1] not in lst_val or expression[i-1] != 'S'):
             expression += '('
             equation.set(expression)
             top.config(text=expression)
@@ -40,11 +40,14 @@ def theExp(num : str, equation, top):
             return
         
         #Next time
-        # if num in lst_val and expression[i-1] == 'ANS':
-        #     expression += f'x{num}'
-        #     equation.set(expression)
-        #     top.config(text=expression)
-        #     return
+        if num in lst_val and expression[i-1] == 'S':
+            expression += f'x{num}'
+            equation.set(expression)
+            top.config(text=expression)
+            return
+        
+        if num in lst_val and expression[i-1] != 'S':
+            break
     
     if len(expression) > 20:
         equation.set(expression)
@@ -65,6 +68,10 @@ def solution(equation, bot):
         return
 
     try:
+        for i in range(len(expression)):
+            if expression[i] == '.' and expression[i + 1] == '.':
+                raise EOFError
+        
         if expression != "" :
             new_exp = str(eval(expression))
             bot.config(text=new_exp)
@@ -74,6 +81,8 @@ def solution(equation, bot):
         else:
             raise EOFError
     except:
+        for i, j in rep.items():
+            expression = expression.replace(j, i)
         equation.set(expression)
         bot.config(text="Invalid")
     
@@ -92,7 +101,6 @@ def back(equation, top):
             count += 1
         else:
             count = 0
-            
     
     if expression == "":
         top.config(text="0")
@@ -145,33 +153,8 @@ def negate(equation, top):
     exp4 = expression[len(expression) - count - 1]  # sign
     exp5 = exp4[:]
     
-    # Next time
-    # if exp4 == 'S' and count == 0 and not expression.startswith('-') and not expression.startswith('+'):
-    #     expression = '-' + exp3 + exp4
-    #     equation.set(expression)
-    #     top.config(text=expression)
-        
-    #     return
-    
-    # if exp4 == 'S' and count == 0 and expression.startswith('-'):
-
-    #     expression = expression.replace('-', '+')
-    #     equation.set(expression)
-    #     top.config(text=expression)
-        
-    #     return
-    
-    # if exp4 == 'S' and count == 0 and expression.startswith('+'):
-        
-    #     expression = expression.replace('+', '-')
-    #     equation.set(expression)
-    #     top.config(text=expression)
-        
-    #     return
-    
     if count == 0:
         return
-    
     
     if exp4 == '+':
         exp4 = '-'
@@ -182,7 +165,7 @@ def negate(equation, top):
     elif exp4 not in ['+', '-'] and len(exp3) > 0:
         exp4 = '-'
         expression = exp3 + exp5 + exp4 + exp2
-    elif len(exp3) == 0:
+    elif len(exp3) == 0 and len(exp2) > 0:
         exp4 = '-'
         expression = exp4 + exp2
     
@@ -194,6 +177,7 @@ def myPer(equation, top):
 
     _new = len(expression)
     count = 0
+    valueAns = rep['ANS']
 
     # Check the values before reaching %
     for i in range(_new):
@@ -204,18 +188,33 @@ def myPer(equation, top):
         else:
             count = 0
 
-    if count == 0:
-        return
-    
     afterExpression = expression[_new - count:]
     beforeExpression = expression[:_new - count]
     
-    
+    for i in range(len(beforeExpression)):
+        if beforeExpression[i-1] == 'S':
+            afterExpression = valueAns
+            break
+        else:
+            break
+
+    if count == 0 and afterExpression.isdigit():
+        theValue = str(float(afterExpression)/100)
+        
+        beforeExpression = beforeExpression[:_new-3]
+
+        expression = beforeExpression + theValue
+
+        equation.set(expression)
+        top.config(text=expression)
+        return
+        
+    if count == 0:
+        return
+        
     theValue = str(float(afterExpression)/100)
 
     expression = beforeExpression + theValue
-    
-
     equation.set(expression)
     top.config(text=expression)
 
@@ -223,7 +222,6 @@ def myDiv(myVal, equation, top):
     global expression
     
     expression += myVal
-    
 
     equation.set(expression)
     top.config(text=expression)
@@ -233,7 +231,6 @@ def myMod(myVal, equation, top):
     
     expression += myVal
     
-
     equation.set(expression)
     top.config(text=expression)  
 
@@ -262,9 +259,10 @@ def Working(val : str, eq, top, bot):
         myDiv(val, eq, top)
     elif val == 'mod':
         myMod(val, eq, top)
-    else:
+    elif val == 'CE':
         expression = ""
-        new_exp = ""
+        new_exp = '!'
+        rep['ANS'] = new_exp
         eq.set("")
         top.config(text="")
         bot.config(text="")
