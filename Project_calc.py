@@ -6,20 +6,38 @@ lst_val = ['1', '2', '3' ,'4', '5', '6', '7', '8', '9', '0', '.']
 rep = {str(chr(247)):'/', 'mod':'%', 'x':'*', 'ANS':str(new_exp)}
 
 def theExp(num : str, equation, top):
-    global expression       
+    global expression
+    
+    expression += num
     
     for i in range(len(expression)):
+        print("This is expresison: " + expression)
+        
+        if  expression[i-1] in lst_val: #num == '(' and
+            print(expression[i-1] + ": YES")
+            break
+        else:
+            print(expression[i-1] + ": NO")
+            break
+        
+        # if num == '(' and expression[i-1] in lst_val : # or expression[i-1] == 'S' or expression[i-1] == 'd'
+        #     expression += 'x('
+        #     equation.set(expression)
+        #     top.config(text=expression)
+        #     return
+        
+        
+        # if num == '(' and (expression[i-1] != 'x' and expression[i-1] != str(chr(247)) and expression[i-1] != '+' and expression[i-1] != '-'): # ('x' or str(chr(247)) or '+' or '-')
+        #     expression += 'x('
+        #     equation.set(expression)
+        #     top.config(text=expression)
+        #     return
                 
-        if num == '(' and (expression[i-1] in lst_val or expression[i-1] == 'S'):
-            expression += 'x('
-            equation.set(expression)
-            top.config(text=expression)
-            return
-        if num == '(' and (expression[i-1] not in lst_val or expression[i-1] != 'S'):
-            expression += '('
-            equation.set(expression)
-            top.config(text=expression)
-            return
+        # if num == '(' and (expression[i-1] not in lst_val or expression[i-1] != 'S'):
+        #     expression += '('
+        #     equation.set(expression)
+        #     top.config(text=expression)
+        #     return
         
         if expression[i-1] in 'ANS' and num == 'ANS':
             expression += 'xANS'
@@ -39,7 +57,6 @@ def theExp(num : str, equation, top):
             top.config(text=expression)
             return
         
-        #Next time
         if num in lst_val and expression[i-1] == 'S':
             expression += f'x{num}'
             equation.set(expression)
@@ -49,16 +66,10 @@ def theExp(num : str, equation, top):
         if num in lst_val and expression[i-1] != 'S':
             break
     
-    if len(expression) > 20:
-        equation.set(expression)
-        top.config(text="The expression is to long")
-        return
-        
-    expression += num
     equation.set(expression)    
     top.config(text=expression)
 
-def solution(equation, bot):
+def solution(equation, bot, top):
     global expression, new_exp
 
     for i, j in rep.items():
@@ -74,6 +85,15 @@ def solution(equation, bot):
         
         if expression != "" :
             new_exp = str(eval(expression))
+            
+            if len(new_exp) >= 25:
+                expression = ""
+                equation.set("")
+                rep['ANS'] = '!'
+                bot.config(text="The expression is to long")
+                top.config(text="")
+                return
+            
             bot.config(text=new_exp)
             equation.set(new_exp)
             expression = ""
@@ -133,41 +153,77 @@ def back(equation, top):
         equation.set(expression)
         top.config(text=expression)
     else:
-        top.config(text="0")
+        top.config(text="0") 
+    
+# Negate functions
+def check_s(expression, len_expression):
+    
+    if len_expression - 3 == 0:
+        ex_sign = '-'
+        expression = ex_sign + expression
+        return expression
+    
+    ex_find_ANS = expression[len_expression - 3:] # S
+    ex_remove_before = expression[:len_expression - 3]
+    ex_sign = expression[len(ex_remove_before) - 1]
+    
+    if ex_sign == '+':
+        ex_sign = '-'
+        expression = ex_remove_before[:len(ex_remove_before)-1] + ex_sign + ex_find_ANS
+    elif ex_sign == '-':
+        ex_sign = '+'
+        expression = ex_remove_before[:len(ex_remove_before)-1] + ex_sign + ex_find_ANS
+    else:
+        ex_sign = '-'
+        expression = ex_remove_before + ex_sign + ex_find_ANS
+    
+    return expression
+    
+def check_number(expression, len_expression, count_numbers):
+    if len_expression - count_numbers == 0:
+        ex_sign = '-'
+        ex_numbers = expression[:count_numbers]
+        expression = ex_sign + ex_numbers
+        return expression
+
+    ex_numbers = expression[len_expression - count_numbers:]
+    ex_letters = expression[:len_expression - count_numbers]
+    ex_sign = ex_letters[len(ex_letters) - 1:]
+
+    if ex_sign == '+':
+        ex_sign = '-'
+        expression = ex_letters[:len(ex_letters)-1] + ex_sign + ex_numbers
+    elif ex_sign == '-':
+        ex_sign = '+'
+        expression = ex_letters[:len(ex_letters)-1] + ex_sign + ex_numbers
+    else:
+        ex_sign = '-'
+        expression = ex_letters + ex_sign + ex_numbers
+        
+    return expression
     
 def negate(equation, top):
     global expression 
     
-    _new = len(expression)
-    count = 0
+    len_expression = len(expression)
+    count_numbers = 0
     
     # check the consecuitive numbers
-    for i in range(_new):
+    for i in range(len_expression):
         if expression[i] in lst_val:
-            count += 1
+            count_numbers += 1
         else:
-            count = 0
+            count_numbers = 0
+            
+    the_S = expression[count_numbers - 1].upper()
     
-    exp2 = expression[len(expression) - count:] # the value
-    exp3 = expression[:len(expression) - count - 1] # expression before
-    exp4 = expression[len(expression) - count - 1]  # sign
-    exp5 = exp4[:]
-    
-    if count == 0:
+    if count_numbers == 0 and the_S != 'S':
         return
-    
-    if exp4 == '+':
-        exp4 = '-'
-        expression = exp3 + exp4 + exp2
-    elif exp4 == '-':
-        exp4 = '+'
-        expression = exp3 + exp4 + exp2
-    elif exp4 not in ['+', '-'] and len(exp3) > 0:
-        exp4 = '-'
-        expression = exp3 + exp5 + exp4 + exp2
-    elif len(exp3) == 0 and len(exp2) > 0:
-        exp4 = '-'
-        expression = exp4 + exp2
+
+    if the_S == 'S':
+        expression = check_s(expression, len_expression)
+    else:
+        expression = check_number(expression, len_expression, count_numbers)
     
     equation.set(expression)
     top.config(text=expression)
@@ -237,7 +293,7 @@ def myMod(myVal, equation, top):
 def Working(val : str, eq, top, bot):
     global expression, new_exp
     
-    if len(expression) > 20:
+    if len(expression) >= 25:
         expression = 'Invalid'
         top.config(text=expression)
         expression = ''
@@ -248,7 +304,7 @@ def Working(val : str, eq, top, bot):
     if val not in ['=', 'CE', '<', str(chr(177)), str(chr(247)), 'mod', '%']:
         theExp(val, eq, top)
     elif val == '=' :
-        solution(eq, bot)
+        solution(eq, bot, top)
     elif val == '<':
         back(eq, top)
     elif val == str(chr(177)):
@@ -292,12 +348,12 @@ def myBody(root ,eq):
     newFrame = tk.Frame(root)
     newFrame.grid(row=0, sticky=tk.NSEW)
     
-    top, bot = myBody_up(newFrame)
+    top, bot = myBody_up(newFrame, eq)
     myBody_down(newFrame, eq, top, bot)
     
     return newFrame
     
-def myBody_up(root):
+def myBody_up(root, eq):
     global expression, new_exp0
     
     myFrame = tk.Frame(root, width= 50, bd=0, highlightbackground="black", highlightcolor="black", highlightthickness=1, bg='white')
