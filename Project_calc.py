@@ -1,82 +1,92 @@
 import tkinter as tk
 from tkinter import StringVar
+
 expression = ""
 new_exp = '!'
 lst_val = ['1', '2', '3' ,'4', '5', '6', '7', '8', '9', '0', '.']
 rep = {str(chr(247)):'/', 'mod':'%', 'x':'*', 'ANS':str(new_exp)}
 
-def theExp(num : str, equation, top):
+def inputing_to_calculator(num : str, equation, top):
     global expression
     
-    expression += num
+    if expression == "" and (num == 'mod' or num == str(chr(247)) or num == 'x' or num == ')'):
+        return
     
-    for i in range(len(expression)):
-        print("This is expresison: " + expression)
-        
-        if  expression[i-1] in lst_val: #num == '(' and
-            print(expression[i-1] + ": YES")
+    if expression == "" and num == '.':
+        expression += '0.0'
+        equation.set(expression)    
+        top.config(text=expression)
+        return
+    
+    characters = [char for char in expression]
+    
+    for _ in range(0,len(expression)):
+        if len(expression) == 0:
             break
-        else:
-            print(expression[i-1] + ": NO")
-            break
         
-        # if num == '(' and expression[i-1] in lst_val : # or expression[i-1] == 'S' or expression[i-1] == 'd'
-        #     expression += 'x('
-        #     equation.set(expression)
-        #     top.config(text=expression)
-        #     return
-        
-        
-        # if num == '(' and (expression[i-1] != 'x' and expression[i-1] != str(chr(247)) and expression[i-1] != '+' and expression[i-1] != '-'): # ('x' or str(chr(247)) or '+' or '-')
-        #     expression += 'x('
-        #     equation.set(expression)
-        #     top.config(text=expression)
-        #     return
-                
-        # if num == '(' and (expression[i-1] not in lst_val or expression[i-1] != 'S'):
-        #     expression += '('
-        #     equation.set(expression)
-        #     top.config(text=expression)
-        #     return
-        
-        if expression[i-1] in 'ANS' and num == 'ANS':
-            expression += 'xANS'
-            equation.set(expression)
-            top.config(text=expression)
-            return
-        
-        if num == 'ANS' and expression[i-1] in lst_val:
-            expression += 'xANS'
-            equation.set(expression)
-            top.config(text=expression)
-            return
-        
-        if num == 'ANS' and expression[i-1] not in lst_val:
-            expression += 'ANS'
-            equation.set(expression)
-            top.config(text=expression)
-            return
-        
-        if num in lst_val and expression[i-1] == 'S':
+        if num in lst_val and (characters[-1] == ')' or characters[-1] == 'S') and num != '.':
             expression += f'x{num}'
             equation.set(expression)
             top.config(text=expression)
+            
             return
         
-        if num in lst_val and expression[i-1] != 'S':
-            break
+        if num == '(' and (characters[-1] in lst_val or characters[-1] == ')' or characters[-1] == 'S'):
+            expression += f'x{num}'
+            equation.set(expression)
+            top.config(text=expression)
+            
+            return
+        
+        if num == ')' and (characters[-1] == '+' or characters[-1] == '-' or characters[-1] == 'x' or characters[-1] == str(chr(247)) or characters[-1] == 'd'):
+            return
+        
+        if num == 'ANS' and (characters[-1] in lst_val or characters[-1] == ')' or characters[-1] == 'S'):
+            expression += f'x{num}'
+            equation.set(expression)
+            top.config(text=expression)
+            
+            return
+        
+        if num == 'mod' and (characters[-1] == 'd' or characters[-1] == '('):
+            return
+        
+        if (num == 'x' or num == str(chr(247)) or num == '+') and\
+            (characters[-1] == 'x' or characters[-1] == str(chr(247)) or characters[-1] == '+' or characters[-1] == '('):
+                expression = expression[:-1] + num
+                equation.set(expression)
+                top.config(text=expression)
+                
+                return
+        
+        if num == '.':
+            count = 0
+            
+            for char in characters:
+                
+                if char not in lst_val:
+                    count = 0
+                elif char == '.':
+                    count += 1
+                    
+            if count >= 1 or characters[-1] not in lst_val:
+                return
+            elif count == 1:
+                break
     
+    expression += num
+        
     equation.set(expression)    
     top.config(text=expression)
 
 def solution(equation, bot, top):
     global expression, new_exp
 
+    if expression == "":
+        return
+    
     for i, j in rep.items():
         expression = expression.replace(i, j)
-    
-    if expression == "None":
-        return
 
     try:
         for i in range(len(expression)):
@@ -109,53 +119,25 @@ def solution(equation, bot, top):
 def back(equation, top):
     global expression
     
+    if expression == "":
+        top.config(text="0")
+        return
+    
     for i, j in rep.items():
         # Displays every space with ANS
         expression = expression.replace(j, i)    
     
-    _new = len(expression)
-    count = 0
+    characters = [character for character in expression]
     
-    for i in range(_new):
-        if expression[i] in lst_val:
-            count += 1
-        else:
-            count = 0
-    
-    if expression == "":
-        top.config(text="0")
-        return
-
-    exp4 = expression[len(expression) - count - 1]  # sign
-    exp5 = expression[len(expression) - 1:]
-    
-    if count == 0 and (exp4 == 'd' or exp4 == 'S'):
-        length = len(expression) - 3
-        expression = expression[:length]
-        equation.set(expression)
-        top.config(text=expression)
-
-    elif count == 0 and (exp4 != 'd' or exp4 != 'S'):
-        length = len(expression) - 1
-        expression = expression[:length]
-        equation.set(expression)
-        top.config(text=expression)
-
-    elif exp5 != 'd' or exp5 != 'S':
-        length = len(expression) - 1
-        expression = expression[:length]
-        equation.set(expression)
-        top.config(text=expression)
-        
-    elif exp5 == 'd' or exp5 == 'S':
-        length = len(expression) - 3
-        expression = expression[:length]
+    if characters[-1] == 'd' or characters[-1] == 'S':
+        expression = expression[:-3]
         equation.set(expression)
         top.config(text=expression)
     else:
-        top.config(text="0") 
+        expression = expression[:-1]
+        equation.set(expression)
+        top.config(text=expression)
     
-# Negate functions
 def check_s(expression, len_expression):
     
     if len_expression - 3 == 0:
@@ -208,6 +190,9 @@ def negate(equation, top):
     len_expression = len(expression)
     count_numbers = 0
     
+    if expression == "":
+        return
+    
     # check the consecuitive numbers
     for i in range(len_expression):
         if expression[i] in lst_val:
@@ -228,69 +213,47 @@ def negate(equation, top):
     equation.set(expression)
     top.config(text=expression)
 
-def myPer(equation, top):
+def percentage(equation, top):
     global expression
 
-    _new = len(expression)
+    len_expression = len(expression)
     count = 0
-    valueAns = rep['ANS']
-
-    # Check the values before reaching %
-    for i in range(_new):
-        if expression[i] in ['%']:
-            break
-        if expression[i] in lst_val:
-            count += 1
-        else:
-            count = 0
-
-    afterExpression = expression[_new - count:]
-    beforeExpression = expression[:_new - count]
+    value_ans = rep['ANS']
     
-    for i in range(len(beforeExpression)):
-        if beforeExpression[i-1] == 'S':
-            afterExpression = valueAns
-            break
-        else:
-            break
-
-    if count == 0 and afterExpression.isdigit():
-        theValue = str(float(afterExpression)/100)
-        
-        beforeExpression = beforeExpression[:_new-3]
-
-        expression = beforeExpression + theValue
-
-        equation.set(expression)
-        top.config(text=expression)
+    if expression == "":
+        print("IN")
         return
-        
-    if count == 0:
-        return
-        
-    theValue = str(float(afterExpression)/100)
-
-    expression = beforeExpression + theValue
-    equation.set(expression)
-    top.config(text=expression)
-
-def myDiv(myVal, equation, top):
-    global expression
     
-    expression += myVal
+    characters = [_ for _ in expression]
+    i = 1
+    # Check if it is a number
+    while i <= len_expression:
+        if characters[-i] not in lst_val or characters[-i] == (None or ""):
+            break
+        
+        count += 1
+        i += 1
+        
+    numbers = expression[-count:]
+    values = expression[:-count]
+    
+    print(count)
+        
+    if count != 0:
+        the_value = str(float(numbers)/100)
+        expression = values + the_value
+        print(expression)
+    elif characters[-i] == 'S' and value_ans != '!':
+        the_value = str(float(value_ans)/100)
+        expression = expression[:-3]
+        expression += the_value
+    else:
+        return
 
     equation.set(expression)
     top.config(text=expression)
 
-def myMod(myVal, equation, top):
-    global expression
-    
-    expression += myVal
-    
-    equation.set(expression)
-    top.config(text=expression)  
-
-def Working(val : str, eq, top, bot):
+def button_inputs(val : str, eq, top, bot):
     global expression, new_exp
     
     if len(expression) >= 25:
@@ -301,8 +264,8 @@ def Working(val : str, eq, top, bot):
         
         return
     
-    if val not in ['=', 'CE', '<', str(chr(177)), str(chr(247)), 'mod', '%']:
-        theExp(val, eq, top)
+    if val not in ['=', 'CE', '<', str(chr(177)), '%']:
+        inputing_to_calculator(val, eq, top)
     elif val == '=' :
         solution(eq, bot, top)
     elif val == '<':
@@ -310,11 +273,7 @@ def Working(val : str, eq, top, bot):
     elif val == str(chr(177)):
         negate(eq, top)
     elif val == '%':
-        myPer(eq, top)
-    elif val == str(chr(247)):
-        myDiv(val, eq, top)
-    elif val == 'mod':
-        myMod(val, eq, top)
+        percentage(eq, top)
     elif val == 'CE':
         expression = ""
         new_exp = '!'
@@ -323,7 +282,7 @@ def Working(val : str, eq, top, bot):
         top.config(text="")
         bot.config(text="")
     
-def myWindow(myRoot):
+def window(myRoot):
     # Title
     myRoot.title("Calculator")
     
@@ -343,17 +302,17 @@ def myWindow(myRoot):
     
     myRoot.resizable(False, False)
 
-def myBody(root ,eq):
+def body(root ,eq):
     
     newFrame = tk.Frame(root)
     newFrame.grid(row=0, sticky=tk.NSEW)
     
-    top, bot = myBody_up(newFrame, eq)
-    myBody_down(newFrame, eq, top, bot)
+    top, bot = body_up(newFrame, eq)
+    body_down(newFrame, eq, top, bot)
     
     return newFrame
     
-def myBody_up(root, eq):
+def body_up(root, eq):
     global expression, new_exp0
     
     myFrame = tk.Frame(root, width= 50, bd=0, highlightbackground="black", highlightcolor="black", highlightthickness=1, bg='white')
@@ -378,7 +337,7 @@ def myBody_up(root, eq):
     
     return topLabel, bottomLabel
     
-def myBody_down(root, eq, topLabel, bottomLabel):
+def body_down(root, eq, topLabel, bottomLabel):
     # Horizontal
     myList : list = [
         ['mod','%' ,'7', '4', '1', str(chr(177))], 
@@ -409,22 +368,22 @@ def myBody_down(root, eq, topLabel, bottomLabel):
                 anchor= tk.CENTER,
                 borderwidth=0.5,
                 font=('Helvetica bold', 19, 'bold'),
-                command= lambda btn=myList[j][i]: Working(btn, eq, topLabel, bottomLabel)
+                command= lambda btn=myList[j][i]: button_inputs(btn, eq, topLabel, bottomLabel)
             ).grid(row=i, column=j)
     return myFrame
             
-def myApp():
+def my_app():
     root = tk.Tk()
     equation = StringVar()
     
-    myWindow(root)
+    window(root)
     
     root.grid_columnconfigure(0, weight=1)
     root.grid_rowconfigure(0, weight=1)
     
-    myBody(root, equation)
+    body(root, equation)
     
     root.mainloop()
     
 if __name__ == '__main__':
-    myApp()
+    my_app()
